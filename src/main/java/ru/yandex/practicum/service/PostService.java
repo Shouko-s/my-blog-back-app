@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.dto.PostPageResponseDto;
 import ru.yandex.practicum.dto.PostRequestDto;
 import ru.yandex.practicum.dto.PostResponseDto;
+import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.model.Post;
 import ru.yandex.practicum.repository.CommentRepository;
 import ru.yandex.practicum.repository.PostRepository;
@@ -37,6 +38,17 @@ public class PostService {
         List<String> tags = normalizeTags(requestDto.tags());
         tagRepository.saveForPost(post.id(), tags);
         return new PostResponseDto(post.id(), post.title(), post.text(), tags, post.likesCount(), 0L);
+    }
+
+    @Transactional(readOnly = true)
+    public PostResponseDto findById(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("Post with id " + postId + " not found"));
+        List<String> tags = tagRepository.findNamesByPostIds(List.of(postId))
+                .getOrDefault(postId, List.of());
+        Long commentsCount = commentRepository.countByPostIds(List.of(postId))
+                .getOrDefault(postId, 0L);
+        return new PostResponseDto(post.id(), post.title(), post.text(), tags, post.likesCount(), commentsCount);
     }
 
     public void saveImageForPost(Long postId, byte[] imageBytes) {

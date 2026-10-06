@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Repository
 public class PostRepositoryImpl implements PostRepository {
@@ -39,6 +40,23 @@ public class PostRepositoryImpl implements PostRepository {
 
         Long id = Objects.requireNonNull(keyHolder.getKey()).longValue();
         return new Post(id, post.title(), post.text(), 0L);
+    }
+
+    @Override
+    public Optional<Post> findById(Long id) {
+        String query = """
+                select id, title, text, likes_count
+                from posts
+                where id = ?
+                """;
+        List<Post> posts = jdbcTemplate.query(query,
+                (rs, rowNum) -> new Post(
+                        rs.getLong("id"),
+                        rs.getString("title"),
+                        rs.getString("text"),
+                        rs.getLong("likes_count")),
+                id);
+        return posts.stream().findFirst();
     }
 
     @Override
