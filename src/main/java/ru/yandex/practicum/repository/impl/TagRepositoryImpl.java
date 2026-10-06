@@ -1,17 +1,20 @@
 package ru.yandex.practicum.repository.impl;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.repository.TagRepository;
 
-import java.util.List;
+import java.util.*;
 
 @Repository
 public class TagRepositoryImpl implements TagRepository {
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public TagRepositoryImpl(JdbcTemplate jdbcTemplate) {
+    public TagRepositoryImpl(JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
     @Override
@@ -37,5 +40,26 @@ public class TagRepositoryImpl implements TagRepository {
             ps.setLong(1, postId);
             ps.setString(2, tag);
         });
+    }
+
+    @Override
+    public Map<Long, List<String>> findNamesByPostIds(Collection<Long> postIds) {
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+
+        String query = """
+                select pt.post_id, t.name
+                from post_tags pt
+                join tags t on t.id = pt.tag_id
+                where pt.post_id in (:postIds)
+                order by t.name
+                """;
+        Map<Long, List<String>> tagsByPostId = new HashMap<>();
+        namedParameterJdbcTemplate.query(query, Map.of("postIds", postIds), rs -> {
+            tagsByPostId.computeIfAbsent(rs.getLong("post_id"), id -> new ArrayList<>())
+                    .add(rs.getString("name"));
+        });
+        return tagsByPostId;
     }
 }

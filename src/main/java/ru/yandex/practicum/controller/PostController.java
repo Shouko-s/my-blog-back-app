@@ -2,6 +2,7 @@ package ru.yandex.practicum.controller;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.yandex.practicum.dto.PostPageResponseDto;
 import ru.yandex.practicum.dto.PostRequestDto;
 import ru.yandex.practicum.dto.PostResponseDto;
 import ru.yandex.practicum.service.PostService;
@@ -34,5 +35,12 @@ public class PostController {
     @GetMapping("/{postId}/image")
     public byte[] getImageForPost(@PathVariable("postId") Long postId) {
         return postService.getImageForPost(postId);
+    }
+
+    @GetMapping
+    public PostPageResponseDto findAll(@RequestParam("search") String search,
+                                       @RequestParam("pageNumber") Long pageNumber,
+                                       @RequestParam("pageSize") Long pageSize) {
+        return postService.findAllPageable(search, pageNumber, pageSize);
     }
 }

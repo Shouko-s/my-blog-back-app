@@ -1,6 +1,8 @@
 package ru.yandex.practicum.repository.impl;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -8,15 +10,18 @@ import ru.yandex.practicum.model.Post;
 import ru.yandex.practicum.repository.PostRepository;
 
 import java.sql.PreparedStatement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 @Repository
 public class PostRepositoryImpl implements PostRepository {
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public PostRepositoryImpl(JdbcTemplate jdbcTemplate) {
+    public PostRepositoryImpl(JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
     @Override
@@ -33,7 +38,7 @@ public class PostRepositoryImpl implements PostRepository {
         }, keyHolder);
 
         Long id = Objects.requireNonNull(keyHolder.getKey()).longValue();
-        return new Post(id, post.title(), post.text(), 0);
+        return new Post(id, post.title(), post.text(), 0L);
     }
 
     @Override
@@ -51,5 +56,68 @@ public class PostRepositoryImpl implements PostRepository {
                 """;
         List<byte[]> images = jdbcTemplate.query(query, (rs, rowNum) -> rs.getBytes("image"), postId);
         return images.isEmpty() ? null : images.getFirst();
+    }
+
+    @Override
+    public List<Post> findPage(String titlePart, List<String> tags, long limit, long offset) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("limit", limit)
+                .addValue("offset", offset);
+        String query = """
+                select p.id, p.title, p.text, p.likes_count
+                from posts p
+                %s
+                order by p.id desc
+                limit :limit offset :offset
+                """.formatted(buildWhereClause(titlePart, tags, params));
+        return namedParameterJdbcTemplate.query(query, params,
+                (rs, rowNum) -> new Post(
+                        rs.getLong("id"),
+                        rs.getString("title"),
+                        rs.getString("text"),
+                        rs.getLong("likes_count")));
+    }
+
+    @Override
+    public long count(String titlePart, List<String> tags) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        String query = """
+                select count(*)
+                from posts p
+                %s
+                """.formatted(buildWhereClause(titlePart, tags, params));
+        Long count = namedParameterJdbcTemplate.queryForObject(query, params, Long.class);
+        return count == null ? 0 : count;
+    }
+
+    private String buildWhereClause(String titlePart, List<String> tags, MapSqlParameterSource params) {
+        List<String> conditions = new ArrayList<>();
+
+        if (!titlePart.isEmpty()) {
+            conditions.add("lower(p.title) like lower(:title) escape '\\'");
+            params.addValue("title", "%" + escapeLikePattern(titlePart) + "%");
+        }
+
+        if (!tags.isEmpty()) {
+            conditions.add("""
+                    p.id in (
+                        select pt.post_id
+                        from post_tags pt
+                        join tags t on t.id = pt.tag_id
+                        where t.name in (:tags)
+                        group by pt.post_id
+                        having count(distinct t.name) = :tagsCount
+                    )""");
+            params.addValue("tags", tags);
+            params.addValue("tagsCount", tags.size());
+        }
+
+        return conditions.isEmpty() ? "" : "where " + String.join(" and ", conditions);
+    }
+
+    private String escapeLikePattern(String value) {
+        return value.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
     }
 }

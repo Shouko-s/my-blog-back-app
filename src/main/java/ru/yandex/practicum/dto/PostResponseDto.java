@@ -7,7 +7,7 @@ public record PostResponseDto(
         String title,
         String text,
         List<String> tags,
-        int likesCount,
-        int commentsCount
+        Long likesCount,
+        Long commentsCount
 ) {
 }
