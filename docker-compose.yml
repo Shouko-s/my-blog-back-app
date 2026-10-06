@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: my-blog-postgres
+    environment:
+      POSTGRES_DB: blog
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - blog-pgdata:/var/lib/postgresql/data
+
+volumes:
+  blog-pgdata:
