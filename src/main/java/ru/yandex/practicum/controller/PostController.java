@@ -1,0 +1,38 @@
+package ru.yandex.practicum.controller;
+
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import ru.yandex.practicum.dto.PostRequestDto;
+import ru.yandex.practicum.dto.PostResponseDto;
+import ru.yandex.practicum.service.PostService;
+
+import java.io.IOException;
+
+@RestController
+@RequestMapping("/posts")
+public class PostController {
+    private final PostService postService;
+
+    public PostController(PostService postService) {
+        this.postService = postService;
+    }
+
+    @PostMapping
+    public PostResponseDto create(@RequestBody PostRequestDto requestDto) {
+        return postService.save(requestDto);
+    }
+
+    @PutMapping("/{postId}/image")
+    public void saveImageForPost(@PathVariable("postId") Long postId, @RequestParam("image") MultipartFile image) {
+        try {
+            postService.saveImageForPost(postId, image.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    @GetMapping("/{postId}/image")
+    public byte[] getImageForPost(@PathVariable("postId") Long postId) {
+        return postService.getImageForPost(postId);
+    }
+}
