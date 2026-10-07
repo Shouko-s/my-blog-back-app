@@ -55,6 +55,20 @@ public class PostService {
         return findById(postId);
     }
 
+    public void delete(Long postId) {
+        if (!postRepository.deleteById(postId)) {
+            throw new NotFoundException("Post with id " + postId + " not found");
+        }
+    }
+
+    @Transactional
+    public Long incrementLikes(Long postId) {
+        if (!postRepository.incrementLikes(postId)) {
+            throw new NotFoundException("Post with id " + postId + " not found");
+        }
+        return postRepository.findLikesCountById(postId).orElseThrow();
+    }
+
     @Transactional(readOnly = true)
     public PostResponseDto findById(Long postId) {
         Post post = postRepository.findById(postId)

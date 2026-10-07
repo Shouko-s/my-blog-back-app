@@ -51,6 +51,30 @@ public class PostRepositoryImpl implements PostRepository {
     }
 
     @Override
+    public boolean deleteById(Long id) {
+        String query = """
+                delete from posts where id = ?
+                """;
+        return jdbcTemplate.update(query, id) > 0;
+    }
+
+    @Override
+    public boolean incrementLikes(Long id) {
+        String query = """
+                update posts set likes_count = likes_count + 1 where id = ?
+                """;
+        return jdbcTemplate.update(query, id) > 0;
+    }
+
+    @Override
+    public Optional<Long> findLikesCountById(Long id) {
+        String query = """
+                select likes_count from posts where id = ?
+                """;
+        return jdbcTemplate.queryForList(query, Long.class, id).stream().findFirst();
+    }
+
+    @Override
     public Optional<Post> findById(Long id) {
         String query = """
                 select id, title, text, likes_count

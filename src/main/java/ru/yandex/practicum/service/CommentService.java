@@ -29,7 +29,6 @@ public class CommentService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
     public CommentResponseDto findById(Long postId, Long commentId) {
         return commentRepository.findByIdAndPostId(commentId, postId)
                 .map(this::toDto)
@@ -43,7 +42,6 @@ public class CommentService {
         return toDto(comment);
     }
 
-    @Transactional
     public CommentResponseDto update(Long postId, Long commentId, CommentRequestDto requestDto) {
         Comment comment = new Comment(commentId, requestDto.text(), postId);
         if (!commentRepository.update(comment)) {
@@ -52,7 +50,6 @@ public class CommentService {
         return toDto(comment);
     }
 
-    @Transactional
     public void delete(Long postId, Long commentId) {
         if (!commentRepository.deleteByIdAndPostId(commentId, postId)) {
             throw commentNotFound(postId, commentId);

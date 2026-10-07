@@ -36,6 +36,16 @@ public class PostController {
         return postService.update(postId, requestDto);
     }
 
+    @DeleteMapping("/{postId}")
+    public void delete(@PathVariable("postId") Long postId) {
+        postService.delete(postId);
+    }
+
+    @PostMapping("/{postId}/likes")
+    public Long incrementLikes(@PathVariable("postId") Long postId) {
+        return postService.incrementLikes(postId);
+    }
+
     @PutMapping("/{postId}/image")
     public void saveImageForPost(@PathVariable("postId") Long postId, @RequestParam("image") MultipartFile image) {
         try {

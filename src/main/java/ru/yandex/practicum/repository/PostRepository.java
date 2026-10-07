@@ -10,6 +10,12 @@ public interface PostRepository {
 
     boolean update(Post post);
 
+    boolean deleteById(Long id);
+
+    boolean incrementLikes(Long id);
+
+    Optional<Long> findLikesCountById(Long id);
+
     Optional<Post> findById(Long id);
 
     boolean existsById(Long id);
