@@ -43,6 +43,14 @@ public class TagRepositoryImpl implements TagRepository {
     }
 
     @Override
+    public void deleteForPost(Long postId) {
+        String query = """
+                delete from post_tags where post_id = ?
+                """;
+        jdbcTemplate.update(query, postId);
+    }
+
+    @Override
     public Map<Long, List<String>> findNamesByPostIds(Collection<Long> postIds) {
         if (postIds.isEmpty()) {
             return Map.of();

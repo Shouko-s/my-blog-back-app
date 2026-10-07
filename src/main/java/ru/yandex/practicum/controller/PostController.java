@@ -31,6 +31,11 @@ public class PostController {
         return postService.findById(postId);
     }
 
+    @PutMapping("/{postId}")
+    public PostResponseDto update(@PathVariable("postId") Long postId, @RequestBody PostRequestDto requestDto) {
+        return postService.update(postId, requestDto);
+    }
+
     @PutMapping("/{postId}/image")
     public void saveImageForPost(@PathVariable("postId") Long postId, @RequestParam("image") MultipartFile image) {
         try {

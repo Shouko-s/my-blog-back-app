@@ -43,6 +43,14 @@ public class PostRepositoryImpl implements PostRepository {
     }
 
     @Override
+    public boolean update(Post post) {
+        String query = """
+                update posts set title = ?, text = ? where id = ?
+                """;
+        return jdbcTemplate.update(query, post.title(), post.text(), post.id()) > 0;
+    }
+
+    @Override
     public Optional<Post> findById(Long id) {
         String query = """
                 select id, title, text, likes_count

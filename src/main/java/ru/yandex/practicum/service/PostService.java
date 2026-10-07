@@ -44,6 +44,17 @@ public class PostService {
         return new PostResponseDto(post.id(), post.title(), post.text(), tags, post.likesCount(), 0L);
     }
 
+    @Transactional
+    public PostResponseDto update(Long postId, PostRequestDto requestDto) {
+        boolean updated = postRepository.update(new Post(postId, requestDto.title(), requestDto.text(), null));
+        if (!updated) {
+            throw new NotFoundException("Post with id " + postId + " not found");
+        }
+        tagRepository.deleteForPost(postId);
+        tagRepository.saveForPost(postId, normalizeTags(requestDto.tags()));
+        return findById(postId);
+    }
+
     @Transactional(readOnly = true)
     public PostResponseDto findById(Long postId) {
         Post post = postRepository.findById(postId)
