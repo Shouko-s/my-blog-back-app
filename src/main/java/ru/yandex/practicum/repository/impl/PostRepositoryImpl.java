@@ -60,20 +60,11 @@ public class PostRepositoryImpl implements PostRepository {
     }
 
     @Override
-    public void saveImageForPost(Long postId, byte[] imageBytes) {
+    public boolean existsById(Long id) {
         String query = """
-                update posts set image = ? where id = ?
+                select exists(select 1 from posts where id = ?)
                 """;
-        jdbcTemplate.update(query, imageBytes, postId);
-    }
-
-    @Override
-    public byte[] getImageForPost(Long postId) {
-        String query = """
-                select image from posts where id = ?
-                """;
-        List<byte[]> images = jdbcTemplate.query(query, (rs, rowNum) -> rs.getBytes("image"), postId);
-        return images.isEmpty() ? null : images.getFirst();
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(query, Boolean.class, id));
     }
 
     @Override

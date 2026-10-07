@@ -10,9 +10,7 @@ public interface PostRepository {
 
     Optional<Post> findById(Long id);
 
-    void saveImageForPost(Long postId, byte[] imageBytes);
-
-    byte[] getImageForPost(Long postId);
+    boolean existsById(Long id);
 
     List<Post> findPage(String titlePart, List<String> tags, long limit, long offset);
 

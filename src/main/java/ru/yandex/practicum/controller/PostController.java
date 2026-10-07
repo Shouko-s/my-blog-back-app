@@ -1,10 +1,13 @@
 package ru.yandex.practicum.controller;
 
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.yandex.practicum.dto.PostPageResponseDto;
 import ru.yandex.practicum.dto.PostRequestDto;
 import ru.yandex.practicum.dto.PostResponseDto;
+import ru.yandex.practicum.model.PostImage;
 import ru.yandex.practicum.service.PostService;
 
 import java.io.IOException;
@@ -31,15 +34,19 @@ public class PostController {
     @PutMapping("/{postId}/image")
     public void saveImageForPost(@PathVariable("postId") Long postId, @RequestParam("image") MultipartFile image) {
         try {
-            postService.saveImageForPost(postId, image.getBytes());
+            postService.saveImageForPost(postId, image.getContentType(), image.getBytes());
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
     @GetMapping("/{postId}/image")
-    public byte[] getImageForPost(@PathVariable("postId") Long postId) {
-        return postService.getImageForPost(postId);
+    public ResponseEntity<byte[]> getImageForPost(@PathVariable("postId") Long postId) {
+        PostImage image = postService.getImageForPost(postId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(image.contentType()))
+                .body(image.data());
     }
 
     @GetMapping

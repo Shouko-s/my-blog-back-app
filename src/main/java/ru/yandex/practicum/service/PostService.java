@@ -7,7 +7,9 @@ import ru.yandex.practicum.dto.PostRequestDto;
 import ru.yandex.practicum.dto.PostResponseDto;
 import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.model.Post;
+import ru.yandex.practicum.model.PostImage;
 import ru.yandex.practicum.repository.CommentRepository;
+import ru.yandex.practicum.repository.ImageRepository;
 import ru.yandex.practicum.repository.PostRepository;
 import ru.yandex.practicum.repository.TagRepository;
 
@@ -24,12 +26,14 @@ public class PostService {
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
     private final CommentRepository commentRepository;
+    private final ImageRepository imageRepository;
 
     public PostService(PostRepository postRepository, TagRepository tagRepository,
-                       CommentRepository commentRepository) {
+                       CommentRepository commentRepository, ImageRepository imageRepository) {
         this.postRepository = postRepository;
         this.tagRepository = tagRepository;
         this.commentRepository = commentRepository;
+        this.imageRepository = imageRepository;
     }
 
     @Transactional
@@ -51,12 +55,17 @@ public class PostService {
         return new PostResponseDto(post.id(), post.title(), post.text(), tags, post.likesCount(), commentsCount);
     }
 
-    public void saveImageForPost(Long postId, byte[] imageBytes) {
-        postRepository.saveImageForPost(postId, imageBytes);
+    @Transactional
+    public void saveImageForPost(Long postId, String contentType, byte[] imageBytes) {
+        if (!postRepository.existsById(postId)) {
+            throw new NotFoundException("Post with id " + postId + " not found");
+        }
+        imageRepository.save(new PostImage(postId, contentType, imageBytes));
     }
 
-    public byte[] getImageForPost(Long postId) {
-        return postRepository.getImageForPost(postId);
+    public PostImage getImageForPost(Long postId) {
+        return imageRepository.findByPostId(postId)
+                .orElseThrow(() -> new NotFoundException("Image for post with id " + postId + " not found"));
     }
 
     @Transactional(readOnly = true)
