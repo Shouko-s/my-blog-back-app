@@ -8,7 +8,7 @@ import ru.yandex.practicum.service.CommentService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/posts/{postId}/comments")
+@RequestMapping("/api/posts/{postId}/comments")
 public class CommentController {
     private final CommentService commentService;
 
@@ -34,9 +34,10 @@ public class CommentController {
     }
 
     @PutMapping("/{commentId}")
-    public CommentResponseDto update(@PathVariable("commentId") Long commentId,
+    public CommentResponseDto update(@PathVariable("postId") Long postId,
+                                     @PathVariable("commentId") Long commentId,
                                      @RequestBody CommentRequestDto requestDto) {
-        return commentService.update(requestDto.postId(), commentId, requestDto);
+        return commentService.update(postId, commentId, requestDto);
     }
 
     @DeleteMapping("/{commentId}")
