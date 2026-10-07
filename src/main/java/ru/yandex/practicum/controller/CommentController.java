@@ -33,6 +33,7 @@ public class CommentController {
         return commentService.save(postId, requestDto);
     }
 
+    // тут проблема на стороне фронта, описал в конце readme.md файла
     @PutMapping("/{commentId}")
     public CommentResponseDto update(@PathVariable("postId") Long postId,
                                      @PathVariable("commentId") Long commentId,

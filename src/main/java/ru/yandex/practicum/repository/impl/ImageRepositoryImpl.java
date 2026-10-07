@@ -18,12 +18,18 @@ public class ImageRepositoryImpl implements ImageRepository {
 
     @Override
     public void save(PostImage image) {
-        String query = """
-                insert into post_images(post_id, content_type, data) values(?, ?, ?)
-                on conflict (post_id) do update
-                set content_type = excluded.content_type, data = excluded.data
+        String updateQuery = """
+                update post_images set content_type = ?, data = ? where post_id = ?
                 """;
-        jdbcTemplate.update(query, image.postId(), image.contentType(), image.data());
+        int updated = jdbcTemplate.update(updateQuery, image.contentType(), image.data(), image.postId());
+        if (updated > 0) {
+            return;
+        }
+
+        String insertQuery = """
+                insert into post_images(post_id, content_type, data) values(?, ?, ?)
+                """;
+        jdbcTemplate.update(insertQuery, image.postId(), image.contentType(), image.data());
     }
 
     @Override
