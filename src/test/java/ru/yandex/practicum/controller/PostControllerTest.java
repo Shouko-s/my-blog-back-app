@@ -1,14 +1,11 @@
 package ru.yandex.practicum.controller;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 import ru.yandex.practicum.AbstractIntegrationTest;
 import tools.jackson.databind.ObjectMapper;
 
@@ -21,17 +18,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class PostControllerTest extends AbstractIntegrationTest {
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Autowired
     private MockMvc mockMvc;
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-    }
 
     @Test
     void create_shouldReturnCreatedPost() throws Exception {
@@ -160,7 +150,7 @@ class PostControllerTest extends AbstractIntegrationTest {
         return objectMapper.readTree(response).get("id").asLong();
     }
 
-    private String json(Object value) throws Exception {
+    private String json(Object value) {
         return objectMapper.writeValueAsString(value);
     }
 }
