@@ -1,4 +1,4 @@
-package ru.yandex.practicum.controller;
+package ru.yandex.practicum.web.controller;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -47,12 +47,9 @@ public class PostController {
     }
 
     @PutMapping("/{postId}/image")
-    public void saveImageForPost(@PathVariable("postId") Long postId, @RequestParam("image") MultipartFile image) {
-        try {
-            postService.saveImageForPost(postId, image.getContentType(), image.getBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+    public void saveImageForPost(@PathVariable("postId") Long postId,
+                                 @RequestParam("image") MultipartFile image) throws IOException {
+        postService.saveImageForPost(postId, image.getContentType(), image.getBytes());
     }
 
     @GetMapping("/{postId}/image")
