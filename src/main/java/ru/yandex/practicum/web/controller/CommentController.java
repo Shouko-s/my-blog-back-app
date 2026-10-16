@@ -1,4 +1,4 @@
-package ru.yandex.practicum.controller;
+package ru.yandex.practicum.web.controller;
 
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.CommentRequestDto;

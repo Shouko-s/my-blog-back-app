@@ -92,7 +92,7 @@ class PostControllerTest extends AbstractIntegrationTest {
     @Test
     void image_shouldBeUploadedAndDownloaded() throws Exception {
         long postId = createPost("Test title", "Test text", List.of());
-        byte[] bytes = {1, 2, 3, 4};
+        byte[] bytes = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n', 1, 2};
 
         mockMvc.perform(multipart(HttpMethod.PUT, "/api/posts/{id}/image", postId)
                         .file(new MockMultipartFile("image", "image.png", "image/png", bytes)))
@@ -102,6 +102,16 @@ class PostControllerTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.IMAGE_PNG))
                 .andExpect(content().bytes(bytes));
+    }
+
+    @Test
+    void image_shouldReturnBadRequest_whenContentTypeIsNotAllowed() throws Exception {
+        long postId = createPost("Test title", "Test text", List.of());
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/api/posts/{id}/image", postId)
+                        .file(new MockMultipartFile("image", "image.html", "text/html", "<script>alert(1)</script>".getBytes())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
     }
 
     @Test

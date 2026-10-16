@@ -18,6 +18,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class PostServiceTest extends AbstractServiceTest {
+    private static final byte[] PNG_BYTES = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n', 1, 2};
 
     @Autowired
     private PostService postService;
@@ -109,14 +110,28 @@ class PostServiceTest extends AbstractServiceTest {
         when(postRepository.existsById(1L)).thenReturn(false);
 
         assertThrows(NotFoundException.class,
-                () -> postService.saveImageForPost(1L, "image/png", new byte[]{1}));
+                () -> postService.saveImageForPost(1L, "image/png", PNG_BYTES));
+        verifyNoInteractions(imageRepository);
+    }
+
+    @Test
+    void saveImageForPost_shouldRejectEmptyImage() {
+        assertThrows(IllegalArgumentException.class,
+                () -> postService.saveImageForPost(1L, "image/png", new byte[0]));
+        verifyNoInteractions(imageRepository);
+    }
+
+    @Test
+    void saveImageForPost_shouldRejectNotAllowedContentType() {
+        assertThrows(IllegalArgumentException.class,
+                () -> postService.saveImageForPost(1L, "text/html", "<script>alert(1)</script>".getBytes()));
         verifyNoInteractions(imageRepository);
     }
 
     @Test
     void saveImageForPost_shouldSaveImage() {
         when(postRepository.existsById(1L)).thenReturn(true);
-        byte[] bytes = {1, 2};
+        byte[] bytes = PNG_BYTES;
 
         postService.saveImageForPost(1L, "image/png", bytes);
 
