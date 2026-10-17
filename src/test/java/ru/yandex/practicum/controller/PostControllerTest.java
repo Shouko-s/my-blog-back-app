@@ -1,16 +1,13 @@
 package ru.yandex.practicum.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 import ru.yandex.practicum.AbstractIntegrationTest;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
@@ -21,17 +18,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class PostControllerTest extends AbstractIntegrationTest {
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Autowired
     private MockMvc mockMvc;
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-    }
 
     @Test
     void create_shouldReturnCreatedPost() throws Exception {
@@ -102,7 +92,7 @@ class PostControllerTest extends AbstractIntegrationTest {
     @Test
     void image_shouldBeUploadedAndDownloaded() throws Exception {
         long postId = createPost("Test title", "Test text", List.of());
-        byte[] bytes = {1, 2, 3, 4};
+        byte[] bytes = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n', 1, 2};
 
         mockMvc.perform(multipart(HttpMethod.PUT, "/api/posts/{id}/image", postId)
                         .file(new MockMultipartFile("image", "image.png", "image/png", bytes)))
@@ -112,6 +102,16 @@ class PostControllerTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.IMAGE_PNG))
                 .andExpect(content().bytes(bytes));
+    }
+
+    @Test
+    void image_shouldReturnBadRequest_whenContentTypeIsNotAllowed() throws Exception {
+        long postId = createPost("Test title", "Test text", List.of());
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/api/posts/{id}/image", postId)
+                        .file(new MockMultipartFile("image", "image.html", "text/html", "<script>alert(1)</script>".getBytes())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
     }
 
     @Test
@@ -160,7 +160,7 @@ class PostControllerTest extends AbstractIntegrationTest {
         return objectMapper.readTree(response).get("id").asLong();
     }
 
-    private String json(Object value) throws Exception {
+    private String json(Object value) {
         return objectMapper.writeValueAsString(value);
     }
 }

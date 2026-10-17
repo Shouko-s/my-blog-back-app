@@ -1,14 +1,12 @@
 package ru.yandex.practicum.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 import ru.yandex.practicum.AbstractIntegrationTest;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
@@ -20,18 +18,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CommentControllerTest extends AbstractIntegrationTest {
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Autowired
     private MockMvc mockMvc;
 
     private long postId;
 
     @BeforeEach
     void setUp() throws Exception {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         String response = mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("title", "Test title", "text", "Test text", "tags", List.of()))))
@@ -125,7 +120,7 @@ class CommentControllerTest extends AbstractIntegrationTest {
         return objectMapper.readTree(response).get("id").asLong();
     }
 
-    private String json(Object value) throws Exception {
+    private String json(Object value) {
         return objectMapper.writeValueAsString(value);
     }
 }

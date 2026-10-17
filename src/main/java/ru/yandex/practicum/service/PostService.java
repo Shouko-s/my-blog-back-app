@@ -2,6 +2,7 @@ package ru.yandex.practicum.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.common.ImageWhiteList;
 import ru.yandex.practicum.dto.PostPageResponseDto;
 import ru.yandex.practicum.dto.PostRequestDto;
 import ru.yandex.practicum.dto.PostResponseDto;
@@ -82,6 +83,12 @@ public class PostService {
 
     @Transactional
     public void saveImageForPost(Long postId, String contentType, byte[] imageBytes) {
+        if (imageBytes == null || imageBytes.length == 0) {
+            throw new IllegalArgumentException("Image must not be empty");
+        }
+        if (!ImageWhiteList.isAllowed(contentType)) {
+            throw new IllegalArgumentException("Image type is not allowed");
+        }
         if (!postRepository.existsById(postId)) {
             throw new NotFoundException("Post with id " + postId + " not found");
         }
@@ -114,7 +121,7 @@ public class PostService {
         long offset = (currentPage - 1) * pageSize;
 
         List<Post> posts = postRepository.findPage(titlePart, tags, pageSize, offset);
-        List<PostResponseDto> postResponseDtos = toBuildDtoList(posts);
+        List<PostResponseDto> postResponseDtos = toResponseDtoList(posts);
 
         return new PostPageResponseDto(postResponseDtos, currentPage > 1, currentPage < lastPage, lastPage);
     }
@@ -130,7 +137,7 @@ public class PostService {
                 .toList();
     }
 
-    private List<PostResponseDto> toBuildDtoList(List<Post> posts) {
+    private List<PostResponseDto> toResponseDtoList(List<Post> posts) {
         List<Long> postIds = posts.stream().map(Post::id).toList();
         Map<Long, List<String>> tagsByPostId = tagRepository.findNamesByPostIds(postIds);
         Map<Long, Long> commentsCountByPostId = commentRepository.countByPostIds(postIds);

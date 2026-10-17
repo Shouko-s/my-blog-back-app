@@ -1,26 +1,26 @@
 # My Blog — бэкенд
 
-REST-бэкенд приложения-блога на Spring Framework 6 (без Spring Boot), Java 21, PostgreSQL.
+REST-бэкенд приложения-блога на Spring Boot 4, Java 21, PostgreSQL.
 
-Требования: JDK 21, Maven 3.9+, Docker, Apache Tomcat 11 на Java 21.
+Требования: JDK 21, Docker. Gradle ставить не нужно — используется Gradle Wrapper (`./gradlew`).
 
 ## Сборка
 
 ```bash
-mvn clean package
+./gradlew clean build
 ```
 
-Результат — `target/ROOT.war`. Собрать без запуска тестов: `mvn clean package -DskipTests`.
+Результат — исполняемый jar `build/libs/My-blog-back-app-0.0.1-SNAPSHOT.jar`. Собрать без запуска тестов: `./gradlew clean build -x test`.
 
 ## Запуск тестов
 
 ```bash
-mvn test
+./gradlew test
 ```
 
 Тесты используют in-memory H2, поэтому Docker и PostgreSQL для них не нужны.
 
-## Деплой в Tomcat
+## Запуск приложения
 
 Сначала запустите PostgreSQL из корня проекта:
 
@@ -28,17 +28,23 @@ mvn test
 docker compose up -d
 ```
 
-Поднимется БД `blog` на `localhost:5432` (пользователь `admin`, пароль `admin`). Параметры подключения — в `src/main/resources/application.properties`. Таблицы создаются автоматически при старте приложения.
+Поднимется БД `blog` на `localhost:5432` (пользователь `admin`, пароль `admin`). Параметры подключения и настройки пула соединений HikariCP — в `src/main/resources/application.properties`. Пароль можно переопределить переменной окружения `DB_PASSWORD`. Таблицы создаются автоматически при старте приложения.
 
-### Через IntelliJ IDEA
+Затем запустите приложение одним из способов:
 
-1. Скачайте и распакуйте [Apache Tomcat 11](https://tomcat.apache.org/download-11.cgi).
-2. Откройте **Run → Edit Configurations…**, нажмите **+** и выберите **Tomcat Server → Local**.
-3. На вкладке **Server** в поле **Application server** нажмите **Configure…** и укажите директорию распакованного Tomcat. Порт HTTP — `8080`.
-4. На вкладке **Deployment** нажмите **+ → Artifact…**, выберите war-артефакт проекта (`my-blog-back-app:war` или `my-blog-back-app:war exploded`) и задайте **Application context**: `/`.
-5. Запустите конфигурацию. IDEA соберёт артефакт и задеплоит его в Tomcat.
+```bash
+./gradlew bootRun
+```
 
-## Запуск и использование
+или из собранного jar:
+
+```bash
+java -jar build/libs/My-blog-back-app-0.0.1-SNAPSHOT.jar
+```
+
+В IntelliJ IDEA достаточно запустить класс `MyBlogBackAppApplication`. Приложение стартует на встроенном Tomcat, порт `8080`.
+
+## Использование
 
 Проверка, что бэкенд работает:
 
@@ -68,5 +74,27 @@ curl "http://localhost:8080/api/posts?search=&pageNumber=1&pageSize=5"
 | `POST`   | `/api/posts/{id}/comments`                 | добавление комментария                       |
 | `PUT`    | `/api/posts/{id}/comments/{commentId}`     | редактирование комментария                   |
 | `DELETE` | `/api/posts/{id}/comments/{commentId}`     | удаление комментария                         |
+
+Картинка принимается только с типом `image/jpeg`, `image/png`, `image/gif` или `image/webp` и не должна быть пустой — иначе вернётся `400`.
+
+## Ошибки
+
+Все ошибки возвращаются в едином формате:
+
+```json
+{
+  "code": 404,
+  "status": "NOT_FOUND",
+  "message": "Post with id 42 not found",
+  "timestamp": "2026-10-16T12:00:00"
+}
+```
+
+| Код   | Когда                                                              |
+|-------|--------------------------------------------------------------------|
+| `400` | некорректные параметры (пагинация, недопустимая или пустая картинка) |
+| `404` | пост, комментарий или картинка не найдены                          |
+| `409` | нарушение целостности данных в БД                                  |
+| `500` | непредвиденная ошибка (подробности пишутся в лог)                  |
 
 > При редактировании комментария идентификатор поста берётся из URL; поле `postId` в теле запроса игнорируется, так как фронтенд передаёт его некорректно.
